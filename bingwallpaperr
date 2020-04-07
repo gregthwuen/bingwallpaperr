@@ -1,0 +1,50 @@
+#!/bin/sh
+
+USAGE="Usage: bingwallpaperr [-f <path/to/ouput-file.jpg>] [-s <sleep_time> s|m|h|d]"
+
+until [ -z "$1" ]; do
+    case "$1" in
+        --help )
+            echo "$USAGE"
+            exit
+            ;;
+        -f )
+            OUTPUT_FILE="$2"
+            [ "$#" -ge 2 ] && shift
+            ;;
+        -s )
+            SLEEPTIME="$2"
+            [ "$#" -ge 2 ] && shift
+            ;;
+        *)
+            echo "$USAGE"
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+[ -z "$OUTPUT_FILE" ] && {
+    OUTPUT_FILE="$HOME/bingimg.jpg"
+    echo "Output file not configured. Set to $OUTPUT_FILE"
+}
+
+[ -z "$SLEEPTIME" ] && {
+    SLEEPTIME="8h"
+    echo "Missing sleeptime. Set to $SLEEPTIME"
+}
+
+while : ; do
+    echo "Getting wallpaper URL..."
+    BINGIMGURL="$(curl -s https://www.bing.com | grep -o -m 1 'href="/th.*\.jpg&' \
+    | sed -e 's#href="#https://www.bing.com#' -e 's/&//')"
+
+    if [ "$BINGIMGURL_CURRENT" != "$BINGIMGURL" ]; then
+        echo "New wallpaper found: $BINGIMGURL. Downloading..."
+        curl "$BINGIMGURL" > "$OUTPUT_FILE" && BINGIMGURL_CURRENT=$BINGIMGURL
+    else
+        echo "No new wallpaper found."
+    fi
+
+    sleep "$SLEEPTIME"
+done
